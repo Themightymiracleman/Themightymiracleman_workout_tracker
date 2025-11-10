@@ -1,0 +1,17 @@
+{
+    "name": "Workout Tracker",
+    "short_name": "Workouts",
+    "description": "Track your workouts on the go",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#f3f4f6",
+    "theme_color": "#2563eb",
+    "icons": [
+        {
+            "src": "icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}
