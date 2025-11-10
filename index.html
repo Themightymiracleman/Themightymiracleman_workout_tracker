@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Workout Tracker</title>
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Workout Tracker">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png"> <!-- 180x180 PNG -->
+    <link rel="manifest" href="manifest.json">
+    <!-- Install Prompt Script -->
+    <script>
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // Show install button (optional - add to your UI)
+            const installBtn = document.getElementById('install-btn');
+            if (installBtn) installBtn.style.display = 'block';
+        });
+        window.addEventListener('appinstalled', () => {
+            deferredPrompt = null;
+        });
+        function installApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choice) => {
+                    if (choice.outcome === 'accepted') deferredPrompt = null;
+                });
+            }
+        }
+    </script>
+    <style>
+        /* Your existing styles here - copy from previous version */
+        :root{--p:#2563eb;--pd:#1d4ed8;--s:#10b981;--d:#ef4444;--g:#6b7280;--l:#f3f4f6;--k:#1f2937;--b:#e5e7eb;--sh:0 4px 6px -1px rgba(0,0,0,.1)}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,sans-serif;background:var(--l);color:var(--k);line-height:1.5;padding-bottom:env(safe-area-inset-bottom)}
+        .container{max-width:480px;margin:0 auto;padding:1rem;min-height:100vh}
+        h1{font:700 1.75rem/1 var(--p);text-align:center;margin:1rem 0 1.5rem}
+        .btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.75rem 1rem;border:none;border-radius:.5rem;font:600 1rem/1 sans-serif;cursor:pointer;transition:.2s;width:100%;touch-action:manipulation}
+        .btn-primary{background:var(--p);color:#fff}
+        .btn-primary:active{background:var(--pd);transform:translateY(1px)}
+        .btn-success{background:var(--s);color:#fff}
+        .btn-danger{background:var(--d);color:#fff}
+        .btn-small{padding:.5rem;font-size:.875rem;width:auto}
+        .fab{position:fixed;bottom:calc(1rem + env(safe-area-inset-bottom));right:1rem;width:3.5rem;height:3.5rem;border-radius:50%;background:var(--p);color:#fff;border:none;font-size:1.5rem;box-shadow:0 4px 12px rgba(37,99,235,.3);cursor:pointer;z-index:100;display:flex;align-items:center;justify-content:center}
+        .fab:active{transform:scale(.95)}
+        .modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;z-index:1000;opacity:0;visibility:hidden;transition:.3s}
+        .modal.active{opacity:1;visibility:visible}
+        .modal-content{background:#fff;width:100%;max-width:480px;border-radius:1rem 1rem 0 0;max-height:90vh;overflow-y:auto;transform:translateY(100%);transition:transform .3s}
+        .modal.active .modal-content{transform:translateY(0)}
+        .modal-header{padding:1rem;border-bottom:1px solid var(--b);display:flex;justify-content:space-between;align-items:center}
+        .modal-title{font:700 1.25rem/1 sans-serif}
+        .close-btn{background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--g)}
+        .modal-body{padding:1rem}
+        .form-group{margin-bottom:1rem}
+        label{display:block;margin-bottom:.5rem;font-weight:600;color:var(--k)}
+        input,select{width:100%;padding:.75rem;border:1px solid var(--b);border-radius:.5rem;font-size:1rem}
+        input:focus,select:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+        .exercise-item{display:flex;align-items:center;gap:.75rem;padding:.75rem 0;border-bottom:1px solid var(--b)}
+        .exercise-item:last-child{border-bottom:none}
+        .set-inputs{display:flex;gap:.5rem;align-items:center}
+        .set-inputs input{width:4rem;text-align:center}
+        .set-label{font-size:.875rem;color:var(--g);min-width:3rem}
+        .add-exercise-btn{margin-top:1rem;background:var(--l);color:var(--p);border:1px dashed var(--b)}
+        .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem}
+        .stat-card{background:#fff;padding:1rem;border-radius:.75rem;text-align:center;box-shadow:var(--sh)}
+        .stat-value{font:700 1.5rem/1 var(--p)}
+        .stat-label{font-size:.875rem;color:var(--g);margin-top:.25rem}
+        .workout-item{background:#fff;border-radius:.75rem;padding:1rem;margin-bottom:.75rem;box-shadow:var(--sh);border:1px solid var(--b)}
+        .workout-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem}
+        .workout-date{font-size:.875rem;color:var(--g)}
+        .workout-name{font:700 1.125rem/1 sans-serif}
+        .workout-actions{display:flex;gap:.5rem}
+        .empty-state{text-align:center;padding:2rem 1rem;color:var(--g)}
+        .empty-state svg{width:4rem;height:4rem;margin-bottom:1rem;opacity:.5}
+        #install-btn { margin: 1rem 0; background: var(--s); color: white; } /* Optional install button */
+        @media (prefers-color-scheme:dark){
+          :root{--l:#111827;--k:#f3f4f6;--b:#374151}
+          body{background:#0f172a}
+          .stat-card,.workout-item{background:#1e293b;border-color:var(--b)}
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Workout Tracker</h1>
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-value" id="total">0</div><div class="stat-label">Total Workouts</div></div>
+            <div class="stat-card"><div class="stat-value" id="streak">0</div><div class="stat-label">Day Streak</div></div>
+        </div>
+        <div id="list" class="workout-list">
+            <div class="empty-state">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                <p>No workouts yet. Tap the + button to start!</p>
+            </div>
+        </div>
+        <!-- Optional: Install Button (shows on Android) -->
+        <button id="install-btn" class="btn btn-success" style="display:none;" onclick="installApp()">Install App</button>
+    </div>
+
+    <button class="fab" id="fab">
+        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
+    </button>
+
+    <!-- Modal and Template - copy from previous version -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-header"><div class="modal-title">New Workout</div><button class="close-btn" id="close">X</button></div>
+            <div class="modal-body">
+                <form id="form">
+                    <div class="form-group"><label for="name">Workout Name</label><input type="text" id="name" placeholder="e.g., Push Day" required></div>
+                    <div id="exs">
+                        <div class="exercise-item" data-i="0">
+                            <input type="text" class="ex-name" placeholder="Exercise name" required>
+                            <div class="set-inputs">
+                                <span class="set-label">Sets</span><input type="number" class="sets" min="1" value="3">
+                                <span class="set-label">Reps</span><input type="number" class="reps" min="1" value="10">
+                                <span class="set-label">lbs</span><input type="number" class="weight" min="0" step="5" value="0">
+                            </div>
+                            <button type="button" class="btn btn-danger btn-small rm" style="display:none">X</button>
+                        </div>
+                    </div>
+                    <button type="button" class="btn add-exercise-btn" id="addEx">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        Add Exercise
+                    </button>
+                    <div style="margin-top:1.5rem;display:flex;gap:.75rem;">
+                        <button type="submit" class="btn btn-success">Save Workout</button>
+                        <button type="button" class="btn" id="cancel" style="background:#e5e7eb;color:#374151">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <template id="tmpl">
+        <div class="exercise-item">
+            <input type="text" class="ex-name" placeholder="Exercise name" required>
+            <div class="set-inputs">
+                <span class="set-label">Sets</span><input type="number" class="sets" min="1" value="3">
+                <span class="set-label">Reps</span><input type="number" class="reps" min="1" value="10">
+                <span class="set-label">lbs</span><input type="number" class="weight" min="0" step="5" value="0">
+            </div>
+            <button type="button" class="btn btn-danger btn-small rm">X</button>
+        </div>
+    </template>
+
+    <!-- Register Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').then(() => console.log('SW registered')).catch(console.error);
+        }
+    </script>
+
+    <!-- Your existing JS - copy from previous compact version -->
+    <script>
+        const $ = s=>document.querySelector(s);
+        const $$ = s=>document.querySelectorAll(s);
+        const fab = $('#fab'), modal = $('#modal'), close = $('#close'), cancel = $('#cancel');
+        const form = $('#form'), nameIn = $('#name'), exs = $('#exs'), addEx = $('#addEx');
+        const list = $('#list'), total = $('#total'), streak = $('#streak');
+        const tmpl = $('#tmpl');
+
+        let workouts = JSON.parse(localStorage.getItem('w'))||[];
+        let idx = 1;
+
+        fab.onclick = ()=>{ modal.classList.add('active'); nameIn.focus(); idx=exs.children.length; updRm(); };
+        close.onclick = cancel.onclick = ()=>{ modal.classList.remove('active'); resetForm(); };
+        modal.onclick = e=>{ if(e.target===modal) modal.classList.remove('active'); };
+        document.onkeydown = e=>{ if(e.key==='Escape' && modal.classList.contains('active')) modal.classList.remove('active'); };
+
+        addEx.onclick = ()=>{
+            const c = tmpl.content.cloneNode(true);
+            const el = c.querySelector('.exercise-item');
+            el.dataset.i = idx++;
+            exs.appendChild(c);
+            updRm(); bindRm(); el.querySelector('.ex-name').focus();
+        };
+
+        function updRm(){ $$('.rm').forEach(b=>b.style.display = exs.children.length>1?'block':'none'); }
+        function bindRm(){ $$('.rm').forEach(b=>b.onclick=()=>{b.parentElement.remove();updRm();}); }
+
+        form.onsubmit = e=>{
+            e.preventDefault();
+            const n = nameIn.value.trim();
+            if(!n) return;
+            const ex = Array.from(exs.children).map(it=>{
+                const na = it.querySelector('.ex-name').value.trim();
+                const s = +it.querySelector('.sets').value||0;
+                const r = +it.querySelector('.reps').value||0;
+                const w = +it.querySelector('.weight').value||0;
+                return {name:na,sets:s,reps:r,weight:w};
+            }).filter(x=>x.name);
+            if(!ex.length) return;
+            const w = {id:Date.now(),name:n,date:new Date().toISOString(),exercises:ex};
+            workouts.unshift(w);
+            localStorage.setItem('w',JSON.stringify(workouts));
+            modal.classList.remove('active');
+            resetForm();
+            render();
+            stats();
+        };
+
+        function resetForm(){
+            form.reset();
+            exs.innerHTML = `<div class="exercise-item" data-i="0">
+                <input type="text" class="ex-name" placeholder="Exercise name" required>
+                <div class="set-inputs">
+                    <span class="set-label">Sets</span><input type="number" class="sets" min="1" value="3">
+                    <span class="set-label">Reps</span><input type="number" class="reps" min="1" value="10">
+                    <span class="set-label">lbs</span><input type="number" class="weight" min="0" step="5" value="0">
+                </div>
+                <button type="button" class="btn btn-danger btn-small rm" style="display:none">X</button>
+            </div>`;
+            bindRm();
+        }
+
+        function render(){
+            if(!workouts.length){
+                list.innerHTML = `<div class="empty-state"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg><p>No workouts yet. Tap the + button to start!</p></div>`;
+                return;
+            }
+            list.innerHTML = workouts.map(w=>{
+                const d = new Date(w.date);
+                const fd = d.toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+                const sum = w.exercises.map(e=>`${e.name}: ${e.sets}×${e.reps}${e.weight?` @ ${e.weight}lbs`:''}`).join('<br>');
+                return `<div class="workout-item">
+                    <div class="workout-header">
+                        <div><div class="workout-name">${esc(w.name)}</div><div class="workout-date">${fd}</div></div>
+                        <div class="workout-actions">
+                            <button class="btn btn-small" onclick="dup(${w.id})" title="Duplicate"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button>
+                            <button class="btn btn-danger btn-small" onclick="del(${w.id})" title="Delete"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                        </div>
+                    </div>
+                    <div style="font-size:.875rem;line-height:1.6;">${sum}</div>
+                </div>`;
+            }).join('');
+        }
+        function del(id){ if(confirm('Delete this workout?')){ workouts=workouts.filter(x=>x.id!==id); localStorage.setItem('w',JSON.stringify(workouts)); render(); stats(); } }
+        function dup(id){ const src=workouts.find(x=>x.id===id); if(!src) return; const cp={...src,id:Date.now(),date:new Date().toISOString(),name:`${src.name} (copy)`}; workouts.unshift(cp); localStorage.setItem('w',JSON.stringify(workouts)); render(); stats(); }
+        function stats(){
+            total.textContent = workouts.length;
+            if(!workouts.length){ streak.textContent='0'; return; }
+            const days = workouts.map(w=>new Date(w.date).setHours(0,0,0,0)).sort((a,b)=>b-a);
+            let s=0, today=new Date().setHours(0,0,0,0), cur=today;
+            for(const d of days){ if(d===cur){ s++; cur-=86400000; } else if(d<cur-86400000) break; }
+            streak.textContent = s;
+        }
+        function esc(t){ const d=document.createElement('div'); d.textContent=t; return d.innerHTML; }
+        window.del=del; window.dup=dup;
+        render(); stats();
+    </script>
+</body>
+</html>
